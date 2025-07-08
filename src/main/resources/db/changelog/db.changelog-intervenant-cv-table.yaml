@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250707-create-intervenant-cv-table
+      author: Djibril
+      changes:
+        - createTable:
+            tableName: intervenant_resources
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: intervenant_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false

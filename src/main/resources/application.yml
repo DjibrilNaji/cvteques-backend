@@ -14,7 +14,12 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
-
+  cors:
+    allowed:
+      origins: "http://localhost:3000"
+      methods: "*"
+      headers: "*"
+      credentials: true
 logging:
   level:
     web: DEBUG
