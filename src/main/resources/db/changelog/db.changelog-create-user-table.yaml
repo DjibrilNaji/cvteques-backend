@@ -8,9 +8,20 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: UUID
+                  type: bigint
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
+                    nullable: false
+              - column:
+                  name: firstname
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: lastname
+                  type: varchar(50)
+                  constraints:
                     nullable: false
               - column:
                   name: email
@@ -24,18 +35,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: full_name
-                  type: varchar(100)
-                  constraints:
-                    nullable: false
-              - column:
                   name: role
                   type: varchar(50)
                   constraints:
                     nullable: false
               - column:
                   name: school_id
-                  type: UUID
+                  type: bigint
                   constraints:
                     nullable: true
               - column:
