@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: 20250707-create-intervenant-cv-table
+      id: 20250707-create-cv-table
       author: Djibril
       changes:
         - createTable:
-            tableName: intervenant_resources
+            tableName: cv
             columns:
               - column:
                   name: id

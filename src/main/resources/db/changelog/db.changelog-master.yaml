@@ -4,4 +4,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/db.changelog-create-schools-table.yaml
   - include:
-      file: db/changelog/db.changelog-intervenant-cv-table.yaml
+      file: db/changelog/db.changelog-cv-table.yaml
