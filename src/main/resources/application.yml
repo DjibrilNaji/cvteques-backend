@@ -4,6 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/cvteques
     username: postgres
+    password: Loumain92
   security:
     user:
       name: admin
@@ -20,6 +21,17 @@ spring:
       methods: "*"
       headers: "*"
       credentials: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "cvteques.noreply@gmail.com"
+    password: "xclo oldb smtn tssi"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 logging:
   level:
     web: DEBUG
