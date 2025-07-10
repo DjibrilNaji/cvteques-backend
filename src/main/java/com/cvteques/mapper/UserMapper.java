@@ -10,6 +10,7 @@ import org.mapstruct.Mapper;
 public class UserMapper {
   public static UserDto toDto(User user) {
     UserDto dto = new UserDto();
+    dto.setId(user.getId());
     dto.setFirstname(user.getFirstname());
     dto.setLastname(user.getLastname());
     dto.setEmail(user.getEmail());

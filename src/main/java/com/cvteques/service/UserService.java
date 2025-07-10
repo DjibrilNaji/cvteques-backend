@@ -33,6 +33,8 @@ public class UserService {
 
   @Autowired private JwtService jwtService;
 
+  @Autowired private EmailService emailService;
+
   private final PasswordEncoder passwordEncoder;
 
   public UserService(PasswordEncoder passwordEncoder) {
@@ -69,6 +71,7 @@ public class UserService {
 
     try {
       userRepository.save(user);
+      emailService.sendAccountCreationEmail(user.getEmail(), request);
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("customMessage", "Erreur lors de l'enregistrement de l'utilisateur."));
@@ -126,7 +129,8 @@ public class UserService {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(
               Map.of(
-                  "customMessage", "Erreur lors de la récupération des informations de l'utilisateur."));
+                  "customMessage",
+                  "Erreur lors de la récupération des informations de l'utilisateur."));
     }
   }
 }
