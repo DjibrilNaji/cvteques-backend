@@ -1,12 +1,15 @@
 package com.cvteques.service;
 
+import com.cvteques.dto.CvListRow;
 import com.cvteques.entity.Cv;
 import com.cvteques.entity.User;
 import com.cvteques.repository.CvRepository;
 import com.cvteques.repository.UserRepository;
 import java.io.File;
 import java.nio.file.*;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,48 +34,48 @@ public class CVService {
       if (file.isEmpty()) {
         return ResponseEntity.badRequest().body(Map.of("customMessage", "Le fichier est vide"));
       }
+      if (file.getSize() > 5 * 1024 * 1024) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("customMessage", "La taille maximale autorisée est de 5 Mo."));
+      }
+      if (!file.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("customMessage", "Seuls les fichiers PDF sont autorisés."));
+      }
 
-      Optional<User> utilisateurOpt = userRepository.findById(intervenantId);
-      if (utilisateurOpt.isEmpty()) {
+      Optional<User> utilisateur = userRepository.findById(intervenantId);
+
+      if (utilisateur.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(Map.of("customMessage", "Utilisateur non trouvé pour l'ID: " + intervenantId));
+            .body(Map.of("customMessage", "Utilisateur non trouvé"));
       }
 
-      User utilisateur = utilisateurOpt.get();
+      var user = utilisateur.get();
+
       File directory = new File(cvDirectory);
-      if (!directory.exists()) {
-        directory.mkdirs();
-      }
+      if (!directory.exists()) directory.mkdirs();
 
-      String filename = file.getOriginalFilename();
-      Path filePath = Paths.get(cvDirectory + filename);
+      String sanitizeFilenam = sanitizeFilename(file.getOriginalFilename());
+      Path filePath = Paths.get(cvDirectory, sanitizeFilenam);
       Files.write(filePath, file.getBytes());
 
-      Optional<Cv> existingOpt = cvRepository.findByIntervenantId(intervenantId);
+      String publicUrl = "cvs/" + sanitizeFilenam;
 
-      if (existingOpt.isPresent()) {
-        Cv existingCv = existingOpt.get();
-        existingCv.setTitle(filename);
-        existingCv.setUrl(filePath.toString());
-        existingCv.setUpdatedAt(LocalDateTime.now());
-        cvRepository.save(existingCv);
-        return ResponseEntity.ok()
-            .body(Map.of("customMessage", "CV mis à jour avec succès sous le nom: " + filename));
-      }
-
-      Cv cv = new Cv();
+      Cv cv = cvRepository.findByIntervenantId(intervenantId).orElseGet(Cv::new);
       cv.setIntervenantId(intervenantId);
-      cv.setTitle(filename);
-      cv.setUrl(filePath.toString());
+      cv.setTitle(file.getOriginalFilename());
+      cv.setUrl(publicUrl);
       cv.setUpdatedAt(LocalDateTime.now());
-
       cvRepository.save(cv);
 
-      emailService.sendCVUploadEmail(
-          utilisateur.getEmail(), utilisateur.getFirstname(), filePath.toFile());
+      emailService.sendCVUploadEmail(user.getEmail(), user.getFirstname(), filePath.toFile());
 
       return ResponseEntity.ok()
-          .body(Map.of("customMessage", "CV enregistré avec succès sous le nom: " + filename));
+          .body(
+              Map.of(
+                  "customMessage",
+                  "CV enregistré avec succès sous le nom : " + file.getOriginalFilename()));
+
     } catch (Exception e) {
       e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -95,7 +98,7 @@ public class CVService {
       Cv existingCv = existingOpt.get();
 
       try {
-        Files.deleteIfExists(Paths.get(existingCv.getUrl()));
+        Files.deleteIfExists(Paths.get("uploads", existingCv.getUrl()));
       } catch (Exception ioe) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(
@@ -106,14 +109,28 @@ public class CVService {
 
       cvRepository.delete(existingCv);
 
-      return ResponseEntity.ok()
-          .body(
-              Map.of(
-                  "customMessage", "CV supprimé avec succès pour l’intervenant " + intervenantId));
+      return ResponseEntity.ok().body(Map.of("customMessage", "CV supprimé avec succès"));
     } catch (Exception e) {
       e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("customMessage", "Une erreur est survenue lors de la suppression du CV"));
     }
+  }
+
+  public List<CvListRow> getAllCVs() {
+    return cvRepository.findAllWithUser();
+  }
+
+  private String sanitizeFilename(String originalName) {
+    String baseName = originalName.replaceAll("\\.[^.]+$", ""); // sans extension
+    String extension = originalName.replaceAll("^.+\\.", ""); // extension
+
+    String normalized =
+        Normalizer.normalize(baseName, Normalizer.Form.NFD)
+            .replaceAll("[\\p{InCombiningDiacriticalMarks}]", ""); // suppr. accents
+
+    String clean = normalized.replaceAll("[^a-zA-Z0-9-_]", "-"); // alphanum only
+
+    return clean + "-" + System.currentTimeMillis() + "." + extension;
   }
 }

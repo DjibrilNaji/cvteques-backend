@@ -1,6 +1,8 @@
 package com.cvteques.controller;
 
+import com.cvteques.dto.CvListRow;
 import com.cvteques.service.CVService;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -27,5 +29,11 @@ public class CvController {
   @DeleteMapping("/{intervenantId}")
   public ResponseEntity<Map<String, String>> deleteCv(@PathVariable Long intervenantId) {
     return CVService.deleteCV(intervenantId);
+  }
+
+  @GetMapping
+  public ResponseEntity<List<CvListRow>> listCvs() {
+    List<CvListRow> result = CVService.getAllCVs();
+    return ResponseEntity.ok(result);
   }
 }

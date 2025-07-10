@@ -67,7 +67,7 @@ public class EmailService {
               </div>
               <div style="text-align: center; padding-top: 20px; color: #666; font-size: 12px;">
                 <p>Cet email est une confirmation automatique, merci de ne pas y répondre.</p>
-                <p>&copy; 2024 Lootopia. Tous droits réservés.</p>
+                <p>&copy; 2025 Cvteques. Tous droits réservés.</p>
               </div>
             </div>
           </div>
@@ -106,7 +106,7 @@ public class EmailService {
                     </div>
                     <div style="text-align: center; padding-top: 20px; color: #666; font-size: 12px;">
                       <p>Merci de votre confiance.</p>
-                      <p>&copy; 2024 Lootopia. Tous droits réservés.</p>
+                      <p>&copy; 2025 Cvteques. Tous droits réservés.</p>
                     </div>
                   </div>
                 </div>
