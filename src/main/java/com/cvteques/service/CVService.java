@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ public class CVService {
 
   private final String cvDirectory = "uploads/cvs/";
 
+  @Transactional
   public ResponseEntity<Map<String, String>> saveCV(MultipartFile file, Long intervenantId) {
     try {
       if (file.isEmpty()) {
