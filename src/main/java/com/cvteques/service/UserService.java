@@ -2,8 +2,13 @@ package com.cvteques.service;
 
 import com.cvteques.dto.LoginRequest;
 import com.cvteques.dto.RegisterRequest;
+import com.cvteques.dto.UserDto;
+import com.cvteques.entity.Cv;
+import com.cvteques.entity.Role;
 import com.cvteques.entity.School;
 import com.cvteques.entity.User;
+import com.cvteques.mapper.UserMapper;
+import com.cvteques.repository.CvRepository;
 import com.cvteques.repository.SchoolRepository;
 import com.cvteques.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -21,6 +26,14 @@ public class UserService {
   @Autowired private UserRepository userRepository;
 
   @Autowired private SchoolRepository schoolRepository;
+
+  @Autowired private CvRepository cvRepository;
+
+  @Autowired private UserMapper userMapper;
+
+  @Autowired private JwtService jwtService;
+
+  @Autowired private EmailService emailService;
 
   private final PasswordEncoder passwordEncoder;
 
@@ -58,6 +71,7 @@ public class UserService {
 
     try {
       userRepository.save(user);
+      emailService.sendAccountCreationEmail(user.getEmail(), request);
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("customMessage", "Erreur lors de l'enregistrement de l'utilisateur."));
@@ -81,6 +95,86 @@ public class UserService {
           .body(Map.of("customMessage", "Mot de passe incorrect."));
     }
 
-    return ResponseEntity.ok(Map.of("customMessage", "Connexion réussie."));
+    String token = jwtService.generateToken(user.getEmail(), user.getRole());
+
+    return ResponseEntity.ok(
+        Map.of(
+            "token",
+            token,
+            "role",
+            user.getRole().toString(),
+            "customMessage",
+            "Connexion réussie."));
+  }
+
+  public ResponseEntity<Map<String, Object>> getUserDtoByEmail(String email) {
+    try {
+      Optional<User> userOpt = userRepository.findByEmail(email);
+
+      if (userOpt.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of("customMessage", "Utilisateur non trouvé."));
+      }
+
+      User user = userOpt.get();
+      UserDto userDto = UserMapper.toDto(user);
+
+      if (user.getRole() == Role.INTERVENANT) {
+        Optional<Cv> cv = cvRepository.findByIntervenantId(user.getId());
+        cv.ifPresent(value -> userDto.setCv(UserMapper.toCvDto(value)));
+      }
+      return ResponseEntity.ok().body(Map.of("data", userDto));
+
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              Map.of(
+                  "customMessage",
+                  "Erreur lors de la récupération des informations de l'utilisateur."));
+    }
+  }
+
+  @Transactional
+  public ResponseEntity<Map<String, String>> updateUser(String email, UserDto updatedUser) {
+    Optional<User> userOpt = userRepository.findByEmail(email);
+
+    if (userOpt.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("customMessage", "Utilisateur non trouvé."));
+    }
+
+    Optional<User> existingUpdatedUser = userRepository.findByEmail(updatedUser.getEmail());
+
+    if (existingUpdatedUser.isPresent() && !existingUpdatedUser.get().getEmail().equals(email)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(Map.of("customMessage", "L'email est déjà utilisé par un autre utilisateur."));
+    }
+
+    User user = userOpt.get();
+
+    try {
+      user.setFirstname(updatedUser.getFirstname());
+      user.setLastname(updatedUser.getLastname());
+      user.setEmail(updatedUser.getEmail());
+
+      if (user.getRole() == Role.INTERVENANT && updatedUser.getSchool() != null) {
+        Long schoolId = updatedUser.getSchool().getId();
+        Optional<School> optionalSchool = schoolRepository.findById(schoolId);
+
+        if (optionalSchool.isEmpty()) {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body(Map.of("customMessage", "L'école spécifiée est introuvable."));
+        }
+
+        user.setSchool(optionalSchool.get());
+      }
+
+      userRepository.save(user);
+
+      return ResponseEntity.ok(Map.of("customMessage", "Profil mis à jour avec succès."));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("customMessage", "Erreur lors de la mise à jour du profil."));
+    }
   }
 }
