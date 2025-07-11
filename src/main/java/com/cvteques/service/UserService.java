@@ -50,8 +50,8 @@ public class UserService {
 
     School school = null;
 
-    if ("SCHOOL".equals(request.role().name()) && request.schoolId() != null) {
-      Optional<School> optionalSchool = schoolRepository.findById(request.schoolId());
+    if (request.role() == Role.ECOLE && request.school() != null) {
+      Optional<School> optionalSchool = schoolRepository.findById(request.school());
 
       if (optionalSchool.isEmpty()) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -1,5 +1,6 @@
 package com.cvteques.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -29,6 +30,7 @@ public class User {
 
   @ManyToOne
   @JoinColumn(name = "school_id")
+  @JsonIgnore
   private School school;
 
   @Column(name = "created_at", nullable = false, updatable = false)

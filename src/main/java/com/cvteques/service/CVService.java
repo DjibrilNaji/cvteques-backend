@@ -5,6 +5,7 @@ import com.cvteques.entity.Cv;
 import com.cvteques.entity.User;
 import com.cvteques.repository.CvRepository;
 import com.cvteques.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.io.File;
 import java.nio.file.*;
 import java.text.Normalizer;
@@ -12,8 +13,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
