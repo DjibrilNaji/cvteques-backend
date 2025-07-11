@@ -2,8 +2,11 @@ package com.cvteques.service;
 
 import com.cvteques.dto.CvListRow;
 import com.cvteques.entity.Cv;
+import com.cvteques.entity.MailAuditTrail;
+import com.cvteques.entity.MailEventType;
 import com.cvteques.entity.User;
 import com.cvteques.repository.CvRepository;
+import com.cvteques.repository.MailAuditTrailRepository;
 import com.cvteques.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.io.File;
@@ -29,6 +32,8 @@ public class CVService {
   @Autowired private UserRepository userRepository;
 
   private final String cvDirectory = "uploads/cvs/";
+
+  @Autowired private MailAuditTrailRepository mailAuditTrailRepository;
 
   @Transactional
   public ResponseEntity<Map<String, String>> saveCV(MultipartFile file, Long intervenantId) {
@@ -71,6 +76,11 @@ public class CVService {
       cvRepository.save(cv);
 
       emailService.sendCVUploadEmail(user.getEmail(), user.getFirstname(), filePath.toFile());
+
+      MailAuditTrail entry = new MailAuditTrail();
+      entry.setEventType(MailEventType.CV_SAVED);
+      entry.setUserId(user.getId());
+      mailAuditTrailRepository.save(entry);
 
       return ResponseEntity.ok()
           .body(

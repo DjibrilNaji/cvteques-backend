@@ -3,12 +3,10 @@ package com.cvteques.service;
 import com.cvteques.dto.LoginRequest;
 import com.cvteques.dto.RegisterRequest;
 import com.cvteques.dto.UserDto;
-import com.cvteques.entity.Cv;
-import com.cvteques.entity.Role;
-import com.cvteques.entity.School;
-import com.cvteques.entity.User;
+import com.cvteques.entity.*;
 import com.cvteques.mapper.UserMapper;
 import com.cvteques.repository.CvRepository;
+import com.cvteques.repository.MailAuditTrailRepository;
 import com.cvteques.repository.SchoolRepository;
 import com.cvteques.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -34,6 +32,8 @@ public class UserService {
   @Autowired private JwtService jwtService;
 
   @Autowired private EmailService emailService;
+
+  @Autowired private MailAuditTrailRepository mailAuditTrailRepository;
 
   private final PasswordEncoder passwordEncoder;
 
@@ -72,6 +72,12 @@ public class UserService {
     try {
       userRepository.save(user);
       emailService.sendAccountCreationEmail(user.getEmail(), request);
+
+      MailAuditTrail entry = new MailAuditTrail();
+      entry.setEventType(MailEventType.USER_REGISTERED);
+      entry.setUserId(user.getId());
+      mailAuditTrailRepository.save(entry);
+
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("customMessage", "Erreur lors de l'enregistrement de l'utilisateur."));

@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/db.changelog-create-schools-table.yaml
   - include:
       file: db/changelog/db.changelog-cv-table.yaml
+  - include:
+      file: db/changelog/db.changelog-create-mail-audit-trail.yaml
